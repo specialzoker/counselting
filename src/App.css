@@ -251,7 +251,12 @@ main {
 }
 
 .table-scroll {
-  overflow-x: auto;
+  overflow: auto;
+}
+
+/* 판정 결과표: 고정 높이 + 내부 스크롤 → 헤더 고정, 가로 스크롤바가 항상 화면에 보임 */
+.result-table .table-scroll {
+  max-height: 72vh;
 }
 
 table {
@@ -274,6 +279,26 @@ tbody td {
   padding: 0.5rem 0.7rem;
   border-bottom: 1px solid var(--panel-border);
   white-space: nowrap;
+}
+
+/* 판정 결과표는 정보량이 많으므로 촘촘하게 */
+.result-table table {
+  font-size: 0.82rem;
+}
+
+.result-table thead tr:first-child th {
+  height: 2rem;
+  box-sizing: border-box;
+  padding: 0.25rem 0.55rem;
+}
+
+.result-table thead tr:last-child th {
+  top: 2rem;
+  padding: 0.25rem 0.55rem;
+}
+
+.result-table tbody td {
+  padding: 0.28rem 0.55rem;
 }
 
 tbody tr:hover {
@@ -358,10 +383,6 @@ thead th.group-jonghap {
 thead tr:first-child th.group-gyogwa,
 thead tr:first-child th.group-jonghap {
   top: 0;
-}
-
-thead tr:last-child th {
-  top: 2.05rem;
 }
 
 .pagination {
