@@ -146,6 +146,8 @@ REF_CONFIGS = [
     ("특별전형", "special", [6, 7], 9, True),
     ("종합", "jonghap", [6], 8, True),
     ("2028대입", "y2028", [5], 9, True),
+    ("수능최저", "suneungMin", [13, 14], 16, True),
+    ("논술", "nonsul", [13, 14], 16, True),
 ]
 
 def _ffill(row):
@@ -198,9 +200,10 @@ def extract_refs():
             if skip_marker and all((v == "*" or v is None) for v in cells):
                 continue
             rows.append([("" if v is None else v) for v in cells])
-        # 헤더 없는 자동생성 열(colN = 스페이서/행번호 인덱스)은 제거
+        # 자동생성 헤더 열(colN) 또는 데이터가 전부 빈 스페이서 열은 제거
+        def _auto(n): return n.startswith("col") and n[3:].isdigit()
         keep = [c for c in range(ncol)
-                if not (names[c].startswith("col") and names[c][3:].isdigit())]
+                if not _auto(names[c]) and not all(str(row[c]).strip() == "" for row in rows)]
         names = [names[c] for c in keep]
         rows = [[row[c] for c in keep] for row in rows]
         import json as _json

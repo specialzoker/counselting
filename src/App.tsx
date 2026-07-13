@@ -29,6 +29,8 @@ const REF_TABS: { key: string; label: string }[] = [
   { key: 'gyogwaBanyeong', label: '교과반영' },
   { key: 'jonghap', label: '종합' },
   { key: 'special', label: '특별전형' },
+  { key: 'suneungMin', label: '수능최저' },
+  { key: 'nonsul', label: '논술' },
   { key: 'y2028', label: '2028대입' },
 ]
 
