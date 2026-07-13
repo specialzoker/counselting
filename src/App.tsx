@@ -123,7 +123,7 @@ function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <h1>수시 NAVI 판정</h1>
+        <h1>2027 수시 상담용</h1>
       </header>
 
       <nav className="tab-bar">
