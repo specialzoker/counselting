@@ -1,7 +1,8 @@
 import openpyxl, json, sys
 from pathlib import Path
 
-SRC = sys.argv[1] if len(sys.argv) > 1 else r"C:\Users\user\Downloads\경기도교육청_2027수시NAVI_수시나비__260707_보호해제.xlsx"
+_args = [a for a in sys.argv[1:] if a != "refs"]
+SRC = _args[0] if _args else r"C:\Users\user\Downloads\경기도교육청_2027수시NAVI_수시나비__260707_보호해제.xlsx"
 OUT = Path("public/data"); OUT.mkdir(parents=True, exist_ok=True)
 
 def _num(v):
@@ -136,8 +137,87 @@ def survey_formulas():
         for k,v in c.most_common(): fh.write(f"{v}\t{k}\n")
 
 
+# ---- 참고 데이터 탭 범용 추출 ----
+REF_CONFIGS = [
+    # (시트명, 파일키, 헤더행들(1-based), 데이터시작행, 스킵마커행유무)
+    ("전형일정", "schedule", [5], 7, True),
+    ("전공자율", "jayul", [5], 7, True),
+    ("교과반영", "gyogwaBanyeong", [5, 6], 8, True),
+    ("특별전형", "special", [6, 7], 9, True),
+    ("종합", "jonghap", [6], 8, True),
+    ("2028대입", "y2028", [5], 9, True),
+]
+
+def _ffill(row):
+    """가로 병합셀 대비: None을 왼쪽 값으로 채운다."""
+    out, last = [], None
+    for v in row:
+        if v is not None and str(v).strip() != "":
+            last = v
+        out.append(last)
+    return out
+
+def _header_names(allrows, header_rows, ncol):
+    filled = []
+    for hr in header_rows:
+        raw = allrows[hr - 1]
+        row = [raw[c] if c < len(raw) else None for c in range(ncol)]
+        filled.append(_ffill(row))
+    names = []
+    for c in range(ncol):
+        parts = []
+        for f in filled:
+            v = f[c]
+            if v is not None and str(v).strip() != "" and str(v) not in parts:
+                parts.append(str(v).replace("\n", " ").strip())
+        names.append(" · ".join(parts) if parts else f"col{c+1}")
+    return names
+
+def extract_refs():
+    wb = openpyxl.load_workbook(SRC, read_only=True, data_only=True)
+    outdir = OUT / "ref"; outdir.mkdir(parents=True, exist_ok=True)
+    index = []
+    for sheet, key, header_rows, data_start, skip_marker in REF_CONFIGS:
+        ws = wb[sheet]
+        allrows = list(ws.iter_rows(values_only=True))
+        maxrow = len(allrows)
+        # 실제 열 개수: 헤더행 중 가장 넓은 것
+        ncol = 0
+        for hr in header_rows:
+            row = allrows[hr - 1]
+            for i, v in enumerate(row):
+                if v is not None and str(v).strip() != "":
+                    ncol = max(ncol, i + 1)
+        names = _header_names(allrows, header_rows, ncol)
+        rows = []
+        for r in range(data_start, maxrow + 1):
+            row = allrows[r - 1]
+            cells = [row[c] if c < len(row) else None for c in range(ncol)]
+            if all(v is None or str(v).strip() == "" for v in cells):
+                continue
+            if skip_marker and all((v == "*" or v is None) for v in cells):
+                continue
+            rows.append([("" if v is None else v) for v in cells])
+        # 헤더 없는 자동생성 열(colN = 스페이서/행번호 인덱스)은 제거
+        keep = [c for c in range(ncol)
+                if not (names[c].startswith("col") and names[c][3:].isdigit())]
+        names = [names[c] for c in keep]
+        rows = [[row[c] for c in keep] for row in rows]
+        import json as _json
+        _json.dump({"sheet": sheet, "columns": names, "rows": rows},
+                   open(outdir / f"{key}.json", "w", encoding="utf-8"), ensure_ascii=False)
+        index.append({"key": key, "sheet": sheet, "columns": len(names), "rows": len(rows)})
+        print(f"ref {sheet}: {len(rows)} rows x {len(names)} cols")
+    import json as _json
+    _json.dump(index, open(outdir / "index.json", "w", encoding="utf-8"), ensure_ascii=False)
+
+
+
 if __name__ == "__main__":
-    extract_moojib()
-    extract_calc()
-    extract_search_golden()
-    survey_formulas()
+    if "refs" in sys.argv:
+        extract_refs()
+    else:
+        extract_moojib()
+        extract_calc()
+        extract_search_golden()
+        survey_formulas()
