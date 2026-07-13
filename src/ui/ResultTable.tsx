@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { CutSet, JudgeRow } from '../types.ts'
+import type { CutSet, JudgeRow, Naeshin, NaeshinCombo } from '../types.ts'
+import { comboAverage } from '../naeshin.ts'
+import { gyogwaLabel } from '../engine/gyogwaJudge.ts'
+import { GYOGWA_MARGIN } from '../config.ts'
 
 interface ResultTableProps {
   rows: JudgeRow[]
   fiveGrade: boolean
+  naeshin: Naeshin
 }
+
+const COMBOS: NaeshinCombo[] = ['전교과', '국수영사과', '국수영사', '국수영과']
 
 const LABEL_CLASS: Record<string, string> = {
   안정: 'label-stable',
@@ -37,20 +43,39 @@ function diffClass(x: number | null): string {
   return x >= 0 ? 'diff-positive' : 'diff-negative'
 }
 
-function CutGroupCells({ cutSet, fiveGrade }: { cutSet: CutSet; fiveGrade: boolean }) {
+function CutGroupCells({
+  cutSet,
+  fiveGrade,
+  naeshinGrade,
+}: {
+  cutSet: CutSet
+  fiveGrade: boolean
+  naeshinGrade: number | null
+}) {
   const p50 = fiveGrade ? cutSet.p50_5 : cutSet.p50
   const p70 = fiveGrade ? cutSet.p70_5 : cutSet.p70
+  // 판정은 항상 9등급 컷(p50/p70) 기준 — 학생 내신이 9등급이므로 표시 토글과 무관.
+  const label = gyogwaLabel(naeshinGrade, cutSet.p50, cutSet.p70, GYOGWA_MARGIN)
   return (
     <>
-      <td>{cutSet.name ?? '-'}</td>
+      <td>
+        {cutSet.name ?? '-'}
+        {label && <span className={`cell-label ${LABEL_CLASS[label]}`}>{label}</span>}
+      </td>
       <td>{formatCut(p50)}</td>
       <td>{formatCut(p70)}</td>
     </>
   )
 }
 
-export default function ResultTable({ rows, fiveGrade }: ResultTableProps) {
+export default function ResultTable({ rows, fiveGrade, naeshin }: ResultTableProps) {
   const sortedRows = useMemo(() => [...rows].sort((a, b) => a.rank - b.rank), [rows])
+
+  const [gyogwaCombo, setGyogwaCombo] = useState<NaeshinCombo>('전교과')
+  const naeshinGrade = useMemo(
+    () => comboAverage(naeshin[gyogwaCombo]),
+    [naeshin, gyogwaCombo],
+  )
 
   const [page, setPage] = useState(0)
 
@@ -67,6 +92,19 @@ export default function ResultTable({ rows, fiveGrade }: ResultTableProps) {
     <section className="panel result-table">
       <div className="result-table-header">
         <h2>판정 결과</h2>
+        <label className="gyogwa-basis">
+          교과·종합 판정 내신 기준
+          <select value={gyogwaCombo} onChange={(e) => setGyogwaCombo(e.target.value as NaeshinCombo)}>
+            {COMBOS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <span className="gyogwa-basis-value">
+            {naeshinGrade == null ? '내신 미입력' : `${round(naeshinGrade, 2)}등급`}
+          </span>
+        </label>
         <span className="result-count">{rows.length}건</span>
       </div>
 
@@ -125,11 +163,11 @@ export default function ResultTable({ rows, fiveGrade }: ResultTableProps) {
                 <td>{formatCut(r.moojib.jeongsiCut70)}</td>
                 <td className={diffClass(r.diff)}>{formatDiff(r.diff)}</td>
                 <td className={r.label ? LABEL_CLASS[r.label] : ''}>{r.label ?? '-'}</td>
-                <CutGroupCells cutSet={r.moojib.gyogwa1} fiveGrade={fiveGrade} />
-                <CutGroupCells cutSet={r.moojib.gyogwa2} fiveGrade={fiveGrade} />
-                <CutGroupCells cutSet={r.moojib.gyogwa3} fiveGrade={fiveGrade} />
-                <CutGroupCells cutSet={r.moojib.jonghap1} fiveGrade={fiveGrade} />
-                <CutGroupCells cutSet={r.moojib.jonghap2} fiveGrade={fiveGrade} />
+                <CutGroupCells cutSet={r.moojib.gyogwa1} fiveGrade={fiveGrade} naeshinGrade={naeshinGrade} />
+                <CutGroupCells cutSet={r.moojib.gyogwa2} fiveGrade={fiveGrade} naeshinGrade={naeshinGrade} />
+                <CutGroupCells cutSet={r.moojib.gyogwa3} fiveGrade={fiveGrade} naeshinGrade={naeshinGrade} />
+                <CutGroupCells cutSet={r.moojib.jonghap1} fiveGrade={fiveGrade} naeshinGrade={naeshinGrade} />
+                <CutGroupCells cutSet={r.moojib.jonghap2} fiveGrade={fiveGrade} naeshinGrade={naeshinGrade} />
               </tr>
             ))}
           </tbody>

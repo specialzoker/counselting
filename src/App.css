@@ -301,6 +301,35 @@ tbody tr:hover {
   font-weight: 600;
 }
 
+/* 교과·종합 판정: 각 전형 셀의 작은 색 배지 */
+.cell-label {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* 교과·종합 판정 내신 기준 셀렉터 */
+.gyogwa-basis {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--text-secondary, #555);
+}
+
+.gyogwa-basis-value {
+  font-weight: 600;
+  color: var(--text-primary, #222);
+}
+
 .diff-positive {
   color: #0f6e56;
 }

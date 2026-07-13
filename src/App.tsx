@@ -166,7 +166,7 @@ function App() {
             />
             <NaeshinInput naeshin={naeshin} onNaeshinChange={setNaeshin} />
             <NaeshinSummary naeshin={naeshin} />
-            <ResultTable rows={rows} fiveGrade={fiveGrade} />
+            <ResultTable rows={rows} fiveGrade={fiveGrade} naeshin={naeshin} />
           </main>
         )}
       </div>
