@@ -1,7 +1,7 @@
 import openpyxl, json, sys
 from pathlib import Path
 
-_args = [a for a in sys.argv[1:] if a != "refs"]
+_args = [a for a in sys.argv[1:] if a not in ("refs", "hapbul")]
 SRC = _args[0] if _args else r"C:\Users\user\Downloads\경기도교육청_2027수시NAVI_수시나비__260707_보호해제.xlsx"
 OUT = Path("public/data"); OUT.mkdir(parents=True, exist_ok=True)
 
@@ -213,9 +213,47 @@ def extract_refs():
 
 
 
+# ---- 합불사례(전형별/모집단위별) 기준대학별 청크 추출 ----
+HAPBUL_CONFIGS = [
+    ("전형별", "byType"),
+    ("모집단위별", "byUnit"),
+]
+
+def extract_hapbul():
+    import json as _json
+    wb = openpyxl.load_workbook(SRC, read_only=True, data_only=True)
+    outdir = OUT / "hapbul"; outdir.mkdir(parents=True, exist_ok=True)
+    for sheet, key in HAPBUL_CONFIGS:
+        ws = wb[sheet]
+        it = ws.iter_rows(values_only=True)
+        header = [str(h) if h is not None else "" for h in next(it)]
+        groups = {}
+        order = []
+        for r in it:
+            base = r[0]
+            if base is None:
+                continue
+            if base not in groups:
+                groups[base] = []
+                order.append(base)
+            groups[base].append([("" if v is None else v) for v in r])
+        index = []
+        for i, base in enumerate(order):
+            rows = groups[base]
+            _json.dump({"sheet": sheet, "base": base, "columns": header, "rows": rows},
+                       open(outdir / f"{key}_{i}.json", "w", encoding="utf-8"), ensure_ascii=False)
+            index.append({"id": i, "name": base, "rows": len(rows)})
+        _json.dump({"sheet": sheet, "key": key, "columns": header, "bases": index},
+                   open(outdir / f"{key}_index.json", "w", encoding="utf-8"), ensure_ascii=False)
+        print(f"hapbul {sheet}: {len(order)} bases, {sum(len(g) for g in groups.values())} rows")
+
+
+
 if __name__ == "__main__":
     if "refs" in sys.argv:
         extract_refs()
+    elif "hapbul" in sys.argv:
+        extract_hapbul()
     else:
         extract_moojib()
         extract_calc()
