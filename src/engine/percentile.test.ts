@@ -43,6 +43,26 @@ describe('computeStudentPercentile — golden values', () => {
     expect(checked).toBeGreaterThan(600)
   })
 
+  it('returns null when a subject with nonzero weight is blank (no partial average)', () => {
+    // Pattern 1 uses a plain weighted 국어 ref "=$A$2" with weight 25.
+    const p = patterns.find((x) => x.subjectFormulas[0] === '=$A$2' && x.subjectFormulas.length === 4)
+    expect(p).toBeDefined()
+    const noKor: StudentScores = { ...student, kor: null }
+    expect(computeStudentPercentile(p!, noKor)).toBeNull()
+  })
+
+  it('still returns a number when one candidate INSIDE a LARGE(...) is blank but enough remain', () => {
+    // Real pattern: every slot is LARGE(($A$2,$B$2,$Q26,$F$2), k) for k=1,2,3.
+    // Dropping the 영어(Q) candidate still leaves 3 candidates {국,수,탐(1)} for k=1..3.
+    const p = patterns.find((x) => x.subjectFormulas[0] === '=LARGE(($A$2,$B$2,$Q26,$F$2),1)')
+    expect(p).toBeDefined()
+    const noEng: StudentScores = { ...student, engGrade: null }
+    const got = computeStudentPercentile(p!, noEng)
+    expect(got).not.toBeNull()
+    // LARGE over {kor 94, math 96, 탐(1)=max(68,83)=83} → 96,94,83, equal 33.33 weights → 91.0
+    expect(got!).toBeCloseTo(91.0, 2)
+  })
+
   it('matches golden_calc.rows[].al exactly', () => {
     const byCode = new Map(patterns.map((p) => [p.code, p]))
     const mismatches: string[] = []

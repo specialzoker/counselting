@@ -154,7 +154,12 @@ export function computeStudentPercentile(pattern: CalcPattern, s: StudentScores)
     if (w === 0) continue
     const formula = pattern.subjectFormulas[i] ?? ''
     const val = evalExpr(formula.startsWith('=') ? formula.slice(1) : formula, ctx)
-    if (val == null) continue // missing subject value: term contributes nothing
+    // A weighted area with no value means the student left a required score blank.
+    // Excel yields no result here — do NOT renormalize over the remaining weights,
+    // which would emit a confident-looking percentile from incomplete data.
+    // (A blank candidate INSIDE LARGE(...)/MAX(...) is already dropped by evalExpr,
+    // below this level, so best-of tolerance is preserved.)
+    if (val == null) return null
     numer += w * val
     denom += w
   }
