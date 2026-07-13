@@ -17,6 +17,8 @@
   --chip-selected-border: #3f9c6c;
   --input-bg: #1e2227;
   --input-border: #444b56;
+  --group-gyogwa-bg: #1f2d3d;
+  --group-jonghap-bg: #3a2a1f;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -62,5 +64,7 @@ select {
     --chip-selected-border: #4fae7c;
     --input-bg: #ffffff;
     --input-border: #cbd2db;
+    --group-gyogwa-bg: #e8f0fb;
+    --group-jonghap-bg: #fbeee2;
   }
 }

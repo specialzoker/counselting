@@ -193,3 +193,57 @@ tbody tr:hover {
 .diff-negative {
   color: #a32d2d;
 }
+
+.group-head {
+  text-align: center;
+}
+
+.group-gyogwa {
+  background: var(--group-gyogwa-bg);
+}
+
+.group-jonghap {
+  background: var(--group-jonghap-bg);
+}
+
+thead th.group-gyogwa,
+thead th.group-jonghap {
+  position: sticky;
+  top: 0;
+}
+
+thead tr:first-child th.group-gyogwa,
+thead tr:first-child th.group-jonghap {
+  top: 0;
+}
+
+thead tr:last-child th {
+  top: 2.05rem;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+  font-size: 0.85rem;
+}
+
+.pagination button {
+  background: var(--chip-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  color: inherit;
+  font-size: 0.85rem;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pagination-indicator {
+  color: var(--text-muted);
+  white-space: nowrap;
+}

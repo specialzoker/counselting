@@ -114,7 +114,7 @@ function App() {
             moojibQuery={moojibQuery}
             onMoojibQueryChange={setMoojibQuery}
           />
-          <ResultTable rows={rows} />
+          <ResultTable rows={rows} fiveGrade={fiveGrade} />
         </main>
       )}
     </div>

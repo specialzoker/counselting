@@ -1,7 +1,9 @@
-import type { JudgeRow } from '../types.ts'
+import { useEffect, useMemo, useState } from 'react'
+import type { CutSet, JudgeRow } from '../types.ts'
 
 interface ResultTableProps {
   rows: JudgeRow[]
+  fiveGrade: boolean
 }
 
 const LABEL_CLASS: Record<string, string> = {
@@ -10,6 +12,8 @@ const LABEL_CLASS: Record<string, string> = {
   소신: 'label-brave',
   도전: 'label-dare',
 }
+
+const PAGE_SIZE = 100
 
 function round(x: number, decimals: number): number {
   const p = 10 ** decimals
@@ -33,7 +37,32 @@ function diffClass(x: number | null): string {
   return x >= 0 ? 'diff-positive' : 'diff-negative'
 }
 
-export default function ResultTable({ rows }: ResultTableProps) {
+function CutGroupCells({ cutSet, fiveGrade }: { cutSet: CutSet; fiveGrade: boolean }) {
+  const p50 = fiveGrade ? cutSet.p50_5 : cutSet.p50
+  const p70 = fiveGrade ? cutSet.p70_5 : cutSet.p70
+  return (
+    <>
+      <td>{cutSet.name ?? '-'}</td>
+      <td>{formatCut(p50)}</td>
+      <td>{formatCut(p70)}</td>
+    </>
+  )
+}
+
+export default function ResultTable({ rows, fiveGrade }: ResultTableProps) {
+  const sortedRows = useMemo(() => [...rows].sort((a, b) => a.rank - b.rank), [rows])
+
+  const [page, setPage] = useState(0)
+
+  // 필터/성적이 바뀌어 결과 목록이 새로 계산되면 첫 페이지로 되돌린다.
+  useEffect(() => {
+    setPage(0)
+  }, [sortedRows])
+
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE))
+  const clampedPage = Math.min(page, totalPages - 1)
+  const pageRows = sortedRows.slice(clampedPage * PAGE_SIZE, clampedPage * PAGE_SIZE + PAGE_SIZE)
+
   return (
     <section className="panel result-table">
       <div className="result-table-header">
@@ -45,29 +74,97 @@ export default function ResultTable({ rows }: ResultTableProps) {
         <table>
           <thead>
             <tr>
-              <th>대학</th>
-              <th>27수시 모집단위</th>
-              <th>반영영역</th>
-              <th>70%컷</th>
-              <th>차이값</th>
-              <th>판정</th>
+              <th rowSpan={2}>대학</th>
+              <th rowSpan={2}>27수시 모집단위</th>
+              <th rowSpan={2}>반영영역</th>
+              <th rowSpan={2}>학생백분위</th>
+              <th rowSpan={2}>70%컷</th>
+              <th rowSpan={2}>차이값</th>
+              <th rowSpan={2}>판정</th>
+              <th colSpan={3} className="group-head group-gyogwa">
+                교과1
+              </th>
+              <th colSpan={3} className="group-head group-gyogwa">
+                교과2
+              </th>
+              <th colSpan={3} className="group-head group-gyogwa">
+                교과3
+              </th>
+              <th colSpan={3} className="group-head group-jonghap">
+                종합1
+              </th>
+              <th colSpan={3} className="group-head group-jonghap">
+                종합2
+              </th>
+            </tr>
+            <tr>
+              <th className="group-gyogwa">전형명</th>
+              <th className="group-gyogwa">50%</th>
+              <th className="group-gyogwa">70%</th>
+              <th className="group-gyogwa">전형명</th>
+              <th className="group-gyogwa">50%</th>
+              <th className="group-gyogwa">70%</th>
+              <th className="group-gyogwa">전형명</th>
+              <th className="group-gyogwa">50%</th>
+              <th className="group-gyogwa">70%</th>
+              <th className="group-jonghap">전형명</th>
+              <th className="group-jonghap">50%</th>
+              <th className="group-jonghap">70%</th>
+              <th className="group-jonghap">전형명</th>
+              <th className="group-jonghap">50%</th>
+              <th className="group-jonghap">70%</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => (
+            {pageRows.map((r, i) => (
               <tr key={`${r.moojib.univ}-${r.moojib.moojib27}-${r.moojib.code}-${i}`}>
                 <td>{r.moojib.univ}</td>
                 <td>{r.moojib.moojib27 ?? '-'}</td>
                 <td>{r.moojib.banyeong ?? '-'}</td>
+                <td>{formatCut(r.studentPercentile)}</td>
                 <td>{formatCut(r.moojib.jeongsiCut70)}</td>
                 <td className={diffClass(r.diff)}>{formatDiff(r.diff)}</td>
                 <td className={r.label ? LABEL_CLASS[r.label] : ''}>{r.label ?? '-'}</td>
+                <CutGroupCells cutSet={r.moojib.gyogwa1} fiveGrade={fiveGrade} />
+                <CutGroupCells cutSet={r.moojib.gyogwa2} fiveGrade={fiveGrade} />
+                <CutGroupCells cutSet={r.moojib.gyogwa3} fiveGrade={fiveGrade} />
+                <CutGroupCells cutSet={r.moojib.jonghap1} fiveGrade={fiveGrade} />
+                <CutGroupCells cutSet={r.moojib.jonghap2} fiveGrade={fiveGrade} />
               </tr>
             ))}
           </tbody>
         </table>
         {rows.length === 0 && <p className="empty-note">조건에 맞는 모집단위가 없습니다.</p>}
       </div>
+
+      {rows.length > 0 && (
+        <div className="pagination">
+          <button type="button" onClick={() => setPage(0)} disabled={clampedPage === 0}>
+            처음
+          </button>
+          <button type="button" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={clampedPage === 0}>
+            이전
+          </button>
+          <span className="pagination-indicator">
+            {clampedPage + 1} / {totalPages} 페이지 ({sortedRows.length}건 중{' '}
+            {clampedPage * PAGE_SIZE + 1}–{Math.min(sortedRows.length, (clampedPage + 1) * PAGE_SIZE)})
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={clampedPage >= totalPages - 1}
+          >
+            다음
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage(totalPages - 1)}
+            disabled={clampedPage >= totalPages - 1}
+          >
+            마지막
+          </button>
+        </div>
+      )}
     </section>
   )
 }
