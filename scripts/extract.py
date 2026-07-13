@@ -90,6 +90,33 @@ def extract_calc():
     print("calc patterns:", len(patterns))
 
 
+def extract_search_golden():
+    # 검색 결과표(현재 필터 상태의 캐시된 판정 결과)를 종단 검증용 골든으로 추출.
+    from openpyxl.utils import column_index_from_string as ci
+    wbv = openpyxl.load_workbook(SRC, read_only=True, data_only=True)
+    ws = wbv["검색"]
+    def i(letter): return ci(letter) - 1
+    rows_all = [list(r) for r in ws.iter_rows(min_row=1, max_row=517, values_only=True)]
+    def cell(rownum, letter):
+        row = rows_all[rownum - 1]
+        idx = i(letter)
+        return row[idx] if idx < len(row) else None
+    out = []
+    for rownum in range(17, 517):
+        row = rows_all[rownum - 1]
+        univ = row[i("E")] if i("E") < len(row) else None
+        if univ in (None, "", "*"):
+            continue
+        out.append({
+            "region": row[i("C")], "univ": univ, "moojib27": row[i("G")],
+            "studentP": row[i("P")], "cut70": row[i("Q")], "diff": row[i("S")],
+        })
+    # 5등급제 토글은 검색!AK5 (판정 수식 IF($AK$5=TRUE,...)의 스위치). V6는 라벨이라 사용하지 않음.
+    golden = {"baseMonth": cell(7, "N"), "fiveGrade": bool(cell(5, "AK")), "rows": out}
+    json.dump(golden, open(OUT/"golden_search.json","w",encoding="utf-8"), ensure_ascii=False)
+    print("search golden rows:", len(out))
+
+
 def survey_formulas():
     import re, collections
     pats = json.load(open(OUT/"calc_patterns.json",encoding="utf-8"))
@@ -105,4 +132,5 @@ def survey_formulas():
 if __name__ == "__main__":
     extract_moojib()
     extract_calc()
+    extract_search_golden()
     survey_formulas()
