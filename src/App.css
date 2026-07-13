@@ -250,19 +250,16 @@ main {
   color: var(--text-muted);
 }
 
+/* 모든 데이터 표: 고정 높이 + 내부 스크롤 → 헤더 고정, 가로 스크롤바가 항상 화면에 보임 */
 .table-scroll {
   overflow: auto;
-}
-
-/* 판정 결과표: 고정 높이 + 내부 스크롤 → 헤더 고정, 가로 스크롤바가 항상 화면에 보임 */
-.result-table .table-scroll {
   max-height: 72vh;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 thead th {
@@ -270,13 +267,13 @@ thead th {
   top: 0;
   background: var(--thead-bg);
   text-align: left;
-  padding: 0.55rem 0.7rem;
+  padding: 0.35rem 0.6rem;
   border-bottom: 1px solid var(--panel-border);
   white-space: nowrap;
 }
 
 tbody td {
-  padding: 0.5rem 0.7rem;
+  padding: 0.32rem 0.6rem;
   border-bottom: 1px solid var(--panel-border);
   white-space: nowrap;
 }
