@@ -30,6 +30,51 @@ main {
   gap: 1.25rem;
 }
 
+.tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 0.6rem;
+}
+
+.tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.tab:hover {
+  background: var(--chip-bg);
+  color: inherit;
+}
+
+.tab-active {
+  background: var(--chip-selected-bg);
+  border-color: var(--chip-selected-border);
+  color: inherit;
+}
+
+/* RefTable */
+
+.ref-search {
+  width: 100%;
+  max-width: 360px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  padding: 0.45rem 0.65rem;
+  color: inherit;
+  font-size: 0.9rem;
+  margin-bottom: 0.9rem;
+  display: block;
+}
+
 .panel {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);

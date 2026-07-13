@@ -9,6 +9,7 @@ import ScoreInput from './ui/ScoreInput.tsx'
 import NaeshinInput from './ui/NaeshinInput.tsx'
 import NaeshinSummary from './ui/NaeshinSummary.tsx'
 import ResultTable from './ui/ResultTable.tsx'
+import RefTable from './ui/RefTable.tsx'
 
 // 골든 학생 (엑셀 판정 결과 재현용 기본값).
 const GOLDEN_SCORES: StudentScores = {
@@ -20,7 +21,29 @@ const GOLDEN_SCORES: StudentScores = {
   hanGrade: null,
 }
 
+// 상단 탭: 판정 도구 + 참고 데이터 시트. key는 public/data/ref/<key>.json 파일명과 일치.
+const REF_TABS: { key: string; label: string }[] = [
+  { key: 'schedule', label: '전형일정' },
+  { key: 'jayul', label: '전공자율' },
+  { key: 'gyogwaBanyeong', label: '교과반영' },
+  { key: 'jonghap', label: '종합' },
+  { key: 'special', label: '특별전형' },
+  { key: 'y2028', label: '2028대입' },
+]
+
+const TABS = [{ key: 'judge', label: '판정' }, ...REF_TABS]
+
 function App() {
+  const [activeTab, setActiveTab] = useState('judge')
+  // 한 번 열린 탭은 계속 마운트 상태로 유지한다 (display:none으로 숨김) —
+  // 참고 데이터 재요청 방지 + 판정 탭 입력 상태 보존.
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set(['judge']))
+
+  function selectTab(key: string) {
+    setActiveTab(key)
+    setVisitedTabs((prev) => (prev.has(key) ? prev : new Set(prev).add(key)))
+  }
+
   const [moojib, setMoojib] = useState<Moojib[] | null>(null)
   const [patterns, setPatterns] = useState<CalcPattern[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -94,35 +117,58 @@ function App() {
         <h1>수시 NAVI 판정</h1>
       </header>
 
-      {loadError && <p className="error-note">데이터 로드 실패: {loadError}</p>}
+      <nav className="tab-bar">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            className={`tab${activeTab === tab.key ? ' tab-active' : ''}`}
+            onClick={() => selectTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
 
-      {loading && !loadError ? (
-        <p className="loading-note">데이터 불러오는 중…</p>
-      ) : (
-        <main>
-          <ScoreInput
-            scores={scores}
-            onScoresChange={setScores}
-            regionOptions={regionOptions}
-            selectedRegions={regions}
-            onRegionsChange={setRegions}
-            gyeyeolOptions={gyeyeolOptions}
-            selectedGyeyeols={gyeyeols}
-            onGyeyeolsChange={setGyeyeols}
-            month={month}
-            onMonthChange={setMonth}
-            fiveGrade={fiveGrade}
-            onFiveGradeChange={setFiveGrade}
-            univQuery={univQuery}
-            onUnivQueryChange={setUnivQuery}
-            moojibQuery={moojibQuery}
-            onMoojibQueryChange={setMoojibQuery}
-          />
-          <NaeshinInput naeshin={naeshin} onNaeshinChange={setNaeshin} />
-          <NaeshinSummary naeshin={naeshin} />
-          <ResultTable rows={rows} fiveGrade={fiveGrade} />
-        </main>
-      )}
+      <div style={{ display: activeTab === 'judge' ? undefined : 'none' }}>
+        {loadError && <p className="error-note">데이터 로드 실패: {loadError}</p>}
+
+        {loading && !loadError ? (
+          <p className="loading-note">데이터 불러오는 중…</p>
+        ) : (
+          <main>
+            <ScoreInput
+              scores={scores}
+              onScoresChange={setScores}
+              regionOptions={regionOptions}
+              selectedRegions={regions}
+              onRegionsChange={setRegions}
+              gyeyeolOptions={gyeyeolOptions}
+              selectedGyeyeols={gyeyeols}
+              onGyeyeolsChange={setGyeyeols}
+              month={month}
+              onMonthChange={setMonth}
+              fiveGrade={fiveGrade}
+              onFiveGradeChange={setFiveGrade}
+              univQuery={univQuery}
+              onUnivQueryChange={setUnivQuery}
+              moojibQuery={moojibQuery}
+              onMoojibQueryChange={setMoojibQuery}
+            />
+            <NaeshinInput naeshin={naeshin} onNaeshinChange={setNaeshin} />
+            <NaeshinSummary naeshin={naeshin} />
+            <ResultTable rows={rows} fiveGrade={fiveGrade} />
+          </main>
+        )}
+      </div>
+
+      {REF_TABS.filter((tab) => visitedTabs.has(tab.key)).map((tab) => (
+        <div key={tab.key} style={{ display: activeTab === tab.key ? undefined : 'none' }}>
+          <main>
+            <RefTable tabKey={tab.key} />
+          </main>
+        </div>
+      ))}
     </div>
   )
 }
