@@ -5,7 +5,18 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #1a1d21;
+
+  --panel-bg: #23272d;
+  --panel-border: #383e47;
+  --text-muted: #9aa4b2;
+  --row-hover: #2c313a;
+  --thead-bg: #2a2f37;
+  --chip-bg: #2a2f37;
+  --chip-selected-bg: #2f6f4f;
+  --chip-selected-border: #3f9c6c;
+  --input-bg: #1e2227;
+  --input-border: #444b56;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -13,44 +24,43 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+button {
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-family: inherit;
+  cursor: pointer;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
+input,
+select {
   font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  font-size: 0.95rem;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  button {
-    background-color: #f9f9f9;
+    color: #1f2937;
+    background-color: #f4f5f7;
+
+    --panel-bg: #ffffff;
+    --panel-border: #e0e3e8;
+    --text-muted: #6b7280;
+    --row-hover: #f6f8fb;
+    --thead-bg: #f1f3f6;
+    --chip-bg: #eef0f3;
+    --chip-selected-bg: #dcf3e6;
+    --chip-selected-border: #4fae7c;
+    --input-bg: #ffffff;
+    --input-border: #cbd2db;
   }
 }
