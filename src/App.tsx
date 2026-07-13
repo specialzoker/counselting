@@ -10,6 +10,7 @@ import NaeshinInput from './ui/NaeshinInput.tsx'
 import NaeshinSummary from './ui/NaeshinSummary.tsx'
 import ResultTable from './ui/ResultTable.tsx'
 import RefTable from './ui/RefTable.tsx'
+import HapbulTab from './ui/HapbulTab.tsx'
 
 // 골든 학생 (엑셀 판정 결과 재현용 기본값).
 const GOLDEN_SCORES: StudentScores = {
@@ -31,7 +32,13 @@ const REF_TABS: { key: string; label: string }[] = [
   { key: 'y2028', label: '2028대입' },
 ]
 
-const TABS = [{ key: 'judge', label: '판정' }, ...REF_TABS]
+// 합불사례(대용량) 탭: key는 public/data/hapbul/<key>_index.json / <key>_<id>.json 파일명과 일치.
+const HAPBUL_TABS: { key: 'byType' | 'byUnit'; label: string }[] = [
+  { key: 'byType', label: '합불사례(전형별)' },
+  { key: 'byUnit', label: '합불사례(모집단위별)' },
+]
+
+const TABS = [{ key: 'judge', label: '판정' }, ...REF_TABS, ...HAPBUL_TABS]
 
 function App() {
   const [activeTab, setActiveTab] = useState('judge')
@@ -166,6 +173,14 @@ function App() {
         <div key={tab.key} style={{ display: activeTab === tab.key ? undefined : 'none' }}>
           <main>
             <RefTable tabKey={tab.key} />
+          </main>
+        </div>
+      ))}
+
+      {HAPBUL_TABS.filter((tab) => visitedTabs.has(tab.key)).map((tab) => (
+        <div key={tab.key} style={{ display: activeTab === tab.key ? undefined : 'none' }}>
+          <main>
+            <HapbulTab indexKey={tab.key} />
           </main>
         </div>
       ))}
