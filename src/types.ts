@@ -26,6 +26,11 @@ export interface Moojib {
   studentPercentileCached: number | null
 }
 
+export type NaeshinCombo = '전교과' | '국수영사과' | '국수영사' | '국수영과'
+export type NaeshinSemester = '1-1' | '1-2' | '2-1' | '2-2' | '3-1' | '전체'
+
+export type Naeshin = Record<NaeshinCombo, Record<NaeshinSemester, number | null>>
+
 export interface StudentScores {
   kor: number | null
   math: number | null

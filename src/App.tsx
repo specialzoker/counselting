@@ -3,8 +3,11 @@ import './App.css'
 import { loadCalcPatterns, loadMoojib } from './data/loadData.ts'
 import { computeStudentPercentile } from './engine/percentile.ts'
 import { judge } from './engine/judge.ts'
-import type { CalcPattern, Moojib, StudentScores } from './types.ts'
+import type { CalcPattern, Moojib, Naeshin, StudentScores } from './types.ts'
+import { emptyNaeshin } from './naeshin.ts'
 import ScoreInput from './ui/ScoreInput.tsx'
+import NaeshinInput from './ui/NaeshinInput.tsx'
+import NaeshinSummary from './ui/NaeshinSummary.tsx'
 import ResultTable from './ui/ResultTable.tsx'
 
 // 골든 학생 (엑셀 판정 결과 재현용 기본값).
@@ -23,6 +26,7 @@ function App() {
   const [loadError, setLoadError] = useState<string | null>(null)
 
   const [scores, setScores] = useState<StudentScores>(GOLDEN_SCORES)
+  const [naeshin, setNaeshin] = useState<Naeshin>(emptyNaeshin())
   const [regions, setRegions] = useState<string[]>([])
   const [gyeyeols, setGyeyeols] = useState<string[]>([])
   const [month, setMonth] = useState(9)
@@ -114,6 +118,8 @@ function App() {
             moojibQuery={moojibQuery}
             onMoojibQueryChange={setMoojibQuery}
           />
+          <NaeshinInput naeshin={naeshin} onNaeshinChange={setNaeshin} />
+          <NaeshinSummary naeshin={naeshin} />
           <ResultTable rows={rows} fiveGrade={fiveGrade} />
         </main>
       )}
