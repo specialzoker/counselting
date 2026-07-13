@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { CutSet, JudgeRow, Naeshin, NaeshinCombo } from '../types.ts'
-import { comboAverage } from '../naeshin.ts'
 import { gyogwaLabel } from '../engine/gyogwaJudge.ts'
 import { GYOGWA_MARGIN } from '../config.ts'
 
@@ -72,10 +71,7 @@ export default function ResultTable({ rows, fiveGrade, naeshin }: ResultTablePro
   const sortedRows = useMemo(() => [...rows].sort((a, b) => a.rank - b.rank), [rows])
 
   const [gyogwaCombo, setGyogwaCombo] = useState<NaeshinCombo>('전교과')
-  const naeshinGrade = useMemo(
-    () => comboAverage(naeshin[gyogwaCombo]),
-    [naeshin, gyogwaCombo],
-  )
+  const naeshinGrade = naeshin[gyogwaCombo]
 
   const [page, setPage] = useState(0)
 

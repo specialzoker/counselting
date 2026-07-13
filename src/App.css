@@ -165,35 +165,34 @@ main {
 
 /* NaeshinInput */
 
-.naeshin-table {
-  width: auto;
-  min-width: 100%;
+.naeshin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem 1rem;
 }
 
-.naeshin-table th,
-.naeshin-table td {
-  text-align: center;
+.naeshin-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.naeshin-combo-label {
-  text-align: left;
+.naeshin-field-label {
   font-weight: 600;
   white-space: nowrap;
+  min-width: 4.5rem;
 }
 
-.naeshin-table input[type='number'] {
-  width: 4.5rem;
+.naeshin-field input[type='number'] {
+  flex: 1;
+  min-width: 0;
   background: var(--input-bg);
   border: 1px solid var(--input-border);
   border-radius: 6px;
-  padding: 0.3rem 0.4rem;
+  padding: 0.35rem 0.5rem;
   color: inherit;
   font-size: 0.9rem;
   text-align: center;
-}
-
-.naeshin-combo-avg {
-  font-weight: 600;
 }
 
 /* NaeshinSummary */

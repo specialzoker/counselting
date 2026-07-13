@@ -27,9 +27,9 @@ export interface Moojib {
 }
 
 export type NaeshinCombo = '전교과' | '국수영사과' | '국수영사' | '국수영과'
-export type NaeshinSemester = '1-1' | '1-2' | '2-1' | '2-2' | '3-1' | '전체'
 
-export type Naeshin = Record<NaeshinCombo, Record<NaeshinSemester, number | null>>
+// 교과조합별 내신 등급(단일 값). 학기 구분 없이 조합당 하나.
+export type Naeshin = Record<NaeshinCombo, number | null>
 
 export interface StudentScores {
   kor: number | null
