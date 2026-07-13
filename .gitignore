@@ -1,3 +1,6 @@
 node_modules/
 dist/
 .DS_Store
+
+# extraction temp logs
+scripts/_*.log
