@@ -1,4 +1,5 @@
 import type { JudgeLabel, JudgeRow, Moojib } from '../types.ts'
+import { labelOf } from './label'
 
 /**
  * 검색 sheet port.
@@ -52,7 +53,7 @@ export function judge(all: Moojib[], opt: JudgeOptions): JudgeRow[] {
     const studentPercentile = resolveStudentPercentile(m, opt)
     const cut = asNumber(m.jeongsiCut70)
     const diff = studentPercentile != null && cut != null ? studentPercentile - cut : null
-    return { moojib: m, studentPercentile, diff, rank: 0, label: null as JudgeLabel | null }
+    return { moojib: m, studentPercentile, diff, rank: 0, label: labelOf(diff) as JudgeLabel | null }
   })
 
   const ranked = rows
