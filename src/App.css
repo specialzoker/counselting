@@ -256,6 +256,11 @@ main {
   max-height: 72vh;
 }
 
+/* 판정 결과표는 정보량이 많아 더 크게 (한 화면에 더 많은 행) */
+.result-table .table-scroll {
+  max-height: 85vh;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
