@@ -499,3 +499,74 @@ thead tr:first-child th.group-jonghap {
   font-size: 0.95rem;
   font-weight: 700;
 }
+
+/* 사례차트 */
+.casechart-toggle {
+  background: var(--chip-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  color: inherit;
+  font-size: 0.82rem;
+}
+
+.casechart-criteria {
+  margin: 0.2rem 0 0.8rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.casechart-scroll {
+  overflow: auto;
+  max-height: 72vh;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+}
+
+.casechart-axis {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: block;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.casechart-axis-text {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.casechart-grid {
+  stroke: var(--panel-border);
+  stroke-width: 1;
+}
+
+.casechart-label {
+  fill: currentColor;
+  font-size: 11px;
+}
+
+.casechart-bar {
+  fill: var(--chart-bar);
+}
+
+.casechart-marker {
+  fill: var(--chart-marker);
+  stroke: var(--panel-bg);
+  stroke-width: 1.5;
+}
+
+.casechart-hit {
+  fill: transparent;
+}
+
+.casechart-row:hover .casechart-hit {
+  fill: var(--row-hover);
+}
+
+.casechart-legend {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

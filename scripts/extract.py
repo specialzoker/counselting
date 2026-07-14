@@ -368,6 +368,40 @@ def _special_trend(wb):
     return {"sheet": "지원경향", "key": "trend", "intro": intro, "tables": [t1, t2]}
 
 
+def _special_case_chart(wb):
+    # 사례차트: 대학(전형별) 30/50/70%컷 내신 범위. 차트 뷰어(CaseChartTab)가 렌더.
+    from openpyxl.utils import column_index_from_string as ci
+    ws = wb["사례차트"]
+    note = ws.cell(3, 2).value  # B3: "시트 활용 정보\n..."
+    intro = [ln.strip() for ln in str(note).split("\n") if ln.strip()] if note else []
+
+    def cell(r, letter):
+        return ws.cell(r, ci(letter)).value
+
+    def txt(v):
+        return "" if v is None else str(v).strip()
+
+    # 기준 입력행(row6): 권역/전형/계열/기준/학생성적/등급상한/등급하한
+    criteria = (f"{txt(cell(6,'B'))} / {txt(cell(6,'C'))} / {txt(cell(6,'D'))} / {txt(cell(6,'E'))}"
+                f" · 학생성적 {txt(cell(6,'F'))} · 등급 {txt(cell(6,'G'))}~{txt(cell(6,'H'))}")
+
+    rows = []
+    for r in range(9, ws.max_row + 1):
+        univ = cell(r, "B")
+        if univ is None or str(univ).strip() == "":
+            continue
+        rows.append({
+            "rank": _num(cell(r, "A")),
+            "univ": str(univ).strip(),
+            "jh": txt(cell(r, "C")),
+            "cases": _num(cell(r, "E")),
+            "c30": _num(cell(r, "F")),
+            "c50": _num(cell(r, "G")),
+            "c70": _num(cell(r, "H")),
+        })
+    return {"sheet": "사례차트", "key": "caseChart", "intro": intro, "criteria": criteria, "rows": rows}
+
+
 def extract_special():
     import json as _json
     wb = openpyxl.load_workbook(SRC, data_only=True)  # 랜덤 셀 접근 위해 non-read_only
@@ -380,6 +414,14 @@ def extract_special():
         index.append({"key": d["key"], "sheet": d["sheet"],
                       "tables": len(d["tables"]), "introLines": len(d["intro"])})
         print(f"special {d['sheet']}: {len(d['tables'])} tables, {len(d['intro'])} intro lines")
+
+    # 사례차트: 스키마가 다름(rows/criteria, tables 없음) — 별도 저장.
+    dc = _special_case_chart(wb)
+    _json.dump(dc, open(outdir / f"{dc['key']}.json", "w", encoding="utf-8"), ensure_ascii=False)
+    index.append({"key": dc["key"], "sheet": dc["sheet"], "chartRows": len(dc["rows"]),
+                  "introLines": len(dc["intro"])})
+    print(f"special {dc['sheet']}: {len(dc['rows'])} chart rows, {len(dc['intro'])} intro lines")
+
     _json.dump(index, open(outdir / "index.json", "w", encoding="utf-8"), ensure_ascii=False)
 
 

@@ -20,6 +20,10 @@
   --group-gyogwa-bg: #1f2d3d;
   --group-jonghap-bg: #3a2a1f;
 
+  /* 사례차트 (다크 기본): 단일 강조색 범위 막대 + 50%컷 마커 */
+  --chart-bar: #4a7fb5;
+  --chart-marker: #a7d0f5;
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -66,5 +70,9 @@ select {
     --input-border: #cbd2db;
     --group-gyogwa-bg: #e8f0fb;
     --group-jonghap-bg: #fbeee2;
+
+    /* 사례차트 (라이트): 흰 표면에서 대비 확보 */
+    --chart-bar: #6aa5da;
+    --chart-marker: #15507f;
   }
 }

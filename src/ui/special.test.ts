@@ -3,9 +3,12 @@ import notice from '../../public/data/special/notice.json'
 import johgyeon from '../../public/data/special/johgyeon.json'
 import gradeConv from '../../public/data/special/gradeConv.json'
 import trend from '../../public/data/special/trend.json'
+import caseChart from '../../public/data/special/caseChart.json'
 
 type Table = { title: string | null; columns: string[]; rows: (string | number | null)[][] }
 type Special = { sheet: string; key: string; intro: string[]; tables: Table[] }
+type CaseRow = { rank: number | null; univ: string; jh: string; cases: number | null; c30: number | null; c50: number | null; c70: number | null }
+type CaseChart = { sheet: string; key: string; intro: string[]; criteria: string; rows: CaseRow[] }
 
 describe('특수 탭 추출 골든', () => {
   it('안내필독: intro 텍스트만, 표 없음', () => {
@@ -40,5 +43,14 @@ describe('특수 탭 추출 골든', () => {
     expect(d.tables[0].rows[0][2]).toBe('경기대')
     expect(d.tables[1].title).toBe('세부전형 기준')
     expect(d.tables[0].rows.length).toBeGreaterThan(3)
+  })
+
+  it('사례차트: 30/50/70컷 범위 데이터', () => {
+    const d = caseChart as CaseChart
+    expect(d.sheet).toBe('사례차트')
+    expect(d.rows.length).toBeGreaterThan(20)
+    expect(d.rows[0].univ).toBe('성균관대')
+    expect(Math.abs((d.rows[0].c30 as number) - 1.66)).toBeLessThan(0.01)
+    expect(d.rows[0].c30 as number).toBeLessThan(d.rows[0].c70 as number)
   })
 })
