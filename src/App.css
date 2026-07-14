@@ -471,3 +471,31 @@ thead tr:first-child th.group-jonghap {
   color: inherit;
   font-size: 0.85rem;
 }
+
+/* 특수 탭(정적 표) */
+.special-intro {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.special-intro p {
+  margin: 0.15rem 0;
+  color: var(--text-muted, inherit);
+}
+
+.special-heading {
+  margin: 0.9rem 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.data-table {
+  margin-bottom: 1.5rem;
+}
+
+.data-table-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
