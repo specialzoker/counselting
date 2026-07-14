@@ -71,20 +71,24 @@
 
 ## 컴포넌트 설계
 
+> **주의(다른 대화 작업과의 정합성):** `840b6b3`·`bff9108`에서 모든 데이터 표에 "고정 높이 + 헤더 sticky" 스타일이 적용됨. 이 스타일은 전역 CSS(`.table-scroll { overflow:auto; max-height:72vh }`, 전역 `table`/`thead th` sticky)로 되어 있어 **같은 클래스만 쓰면 자동 상속**된다. 따라서 RefTable을 건드릴 필요가 없다.
+
 ### `DataTable` (신규, `src/ui/DataTable.tsx`)
 - props: `columns: string[]`, `rows: (string|number|null)[][]`, `title?: string`.
-- 순수 프레젠테이션. 기존 RefTable의 `<table>` 마크업/스타일을 그대로 이관.
-- 숫자 셀은 오른쪽 정렬(기존 RefTable 동작 유지). 소수는 그대로 출력(반올림은 데이터 단계에서 하지 않음 — 원본 값 보존).
+- 순수 프레젠테이션. `<div className="table-scroll"><table>…</table></div>` 마크업으로 전역 sticky/고정높이 스타일을 상속.
+- 셀 포맷은 RefTable의 `formatCell`과 **동일 규칙**(정수는 그대로, 소수는 `toFixed(2)`, null/빈값은 `""`)을 사용해 기존 탭과 표시 일관성 유지. JSON에는 원본 정밀도를 보존하고 반올림은 표시 단계에서만.
+- `title`이 있으면 표 위에 소제목(`<h3>`) 렌더.
 
-### `RefTable` (수정, `src/ui/RefTable.tsx`)
-- 기존 fetch/로딩/에러 로직 유지. 표 렌더 부분만 `DataTable`을 호출하도록 교체.
-- 외부 동작·출력은 변화 없음(리팩터링).
+### `RefTable` — **수정하지 않음**
+- 기존 8개 참고 탭 회귀 위험을 없애기 위해 RefTable/App.css는 그대로 둔다. `DataTable`은 RefTable에서 분리·추출하지 않고 독립 신규 컴포넌트로 만든다(표 마크업 ~15줄의 소폭 중복은 감수 — 안전 우선). formatCell 규칙만 동일하게 맞춘다.
 
 ### `SpecialTab` (신규, `src/ui/SpecialTab.tsx`)
 - props: `tabKey: string` (예 `notice`).
-- `public/data/special/<key>.json` fetch. RefTable과 동일한 로딩/에러 패턴.
+- `public/data/special/<key>.json` fetch. RefTable과 동일한 로딩/에러 패턴(`loading-note`/`error-note`).
+- 최상위는 `<section className="panel">` (기존 참고 탭과 동일한 패널 스타일).
 - 렌더: `intro` 문단(소제목 강조 규칙 적용) → 각 `tables[i]`를 `DataTable`로.
 - 표가 0개면 문단만, 문단이 0개면 표만.
+- 로더는 RefTable의 `loadRef`와 별개로 `src/data/loadSpecial.ts`를 신규 추가(스키마가 `{intro,tables}`로 다름).
 
 ### `App.tsx` (수정)
 - `SPECIAL_TABS = [{key:'notice',label:'안내필독'}, {key:'johgyeon',label:'백분위조견표'}, {key:'gradeConv',label:'등급변환표'}, {key:'trend',label:'지원경향'}]`.
@@ -99,9 +103,8 @@
 ## 테스트 / 검증
 
 - **추출 검증(수동)**: `python scripts/extract.py special` 실행 후 각 JSON의 `tables` 행 수·열 수와 첫 행 값이 원본과 일치하는지 눈으로 확인(예: 백분위조견표 (1) 첫 행 = 서울대 / 99.07 / 96.5 / 92.4 / 96.18).
-- **컴포넌트 스모크 테스트(선택)**: 기존 테스트 인프라(vitest)는 엔진 위주라 UI 테스트는 없다. `DataTable` 분리가 RefTable 출력을 바꾸지 않음을 보장하기 위해, 기존 참고 탭 렌더가 회귀 없는지 dev 서버로 육안 확인.
-- **빌드**: `npm run build` 에러 없음.
-- **dev 육안 확인**: 4개 탭 전환 시 표/문단 정상, 기존 8개 참고 탭 회귀 없음, 콘솔 에러 없음.
+- **빌드/타입**: `npm run build` (tsc + vite) 에러 없음. 기존 vitest 엔진 테스트 전부 통과(특수 탭은 엔진 미변경이라 영향 없어야 함).
+- **dev 육안 확인**: 4개 특수 탭 전환 시 표/문단 정상, 고정 높이·sticky 헤더 동작, 콘솔 에러 없음. RefTable/판정 탭은 미수정이므로 회귀 없음(그래도 한 번 전환해 확인).
 
 ## 비범위 (YAGNI)
 
