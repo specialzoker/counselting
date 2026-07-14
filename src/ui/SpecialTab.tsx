@@ -3,11 +3,13 @@ import { loadSpecial } from '../data/loadSpecial.ts'
 import type { SpecialData } from '../data/loadSpecial.ts'
 import DataTable from './DataTable.tsx'
 
-// intro 문단 중 '소제목'을 굵게. 숫자/★/▶/·/(/-/공백으로 시작하지 않고, 짧고, 마침표로 끝나지 않는 줄.
+// intro 문단 중 '소제목'을 굵게. 숫자/★/▶/·/(/-/공백으로 시작하지 않고, 짧고,
+// 마침표로 끝나지 않으며, 콜론(정의·불릿 문장)이 없는 줄.
 function isHeading(line: string): boolean {
   if (!line) return false
   const c = line[0]
   if (/[0-9★▶·(\-]/.test(c) || c === ' ') return false
+  if (line.includes(':') || line.includes('：')) return false
   return line.length <= 24 && !line.endsWith('.')
 }
 
