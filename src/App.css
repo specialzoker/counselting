@@ -1,7 +1,7 @@
 .app-shell {
-  max-width: 1200px;
+  max-width: min(1800px, 97vw);
   margin: 0 auto;
-  padding: 1.5rem 1.5rem 3rem;
+  padding: 1.5rem 1rem 3rem;
 }
 
 .app-header {
@@ -275,12 +275,19 @@ thead th {
   padding: 0.35rem 0.6rem;
   border-bottom: 1px solid var(--panel-border);
   white-space: nowrap;
+  vertical-align: top;
 }
 
 tbody td {
   padding: 0.32rem 0.6rem;
   border-bottom: 1px solid var(--panel-border);
-  white-space: nowrap;
+  /* 긴 문장은 열 안에서 줄바꿈해 가로 스크롤을 줄인다 (짧은 셀은 그대로 한 줄).
+     word-break: keep-all → 한국어는 단어(띄어쓰기) 단위로 줄바꿈해 열이 과하게 좁아지지 않게. */
+  white-space: normal;
+  max-width: 24rem;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  vertical-align: top;
 }
 
 /* 판정 결과표는 정보량이 많으므로 촘촘하게 */
@@ -301,6 +308,9 @@ tbody td {
 
 .result-table tbody td {
   padding: 0.28rem 0.55rem;
+  /* 판정표 셀은 숫자·짧은 값이라 줄바꿈 불필요 — 한 줄 유지 */
+  white-space: nowrap;
+  max-width: none;
 }
 
 tbody tr:hover {

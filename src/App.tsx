@@ -44,7 +44,6 @@ const HAPBUL_TABS: { key: 'byType' | 'byUnit'; label: string }[] = [
 
 // 특수 탭(정적 표): key는 public/data/special/<key>.json 파일명과 일치.
 const SPECIAL_TABS: { key: string; label: string }[] = [
-  { key: 'notice', label: '안내필독' },
   { key: 'johgyeon', label: '백분위조견표' },
   { key: 'gradeConv', label: '등급변환표' },
   { key: 'trend', label: '지원경향' },
