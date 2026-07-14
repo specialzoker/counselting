@@ -1,7 +1,7 @@
 import openpyxl, json, sys
 from pathlib import Path
 
-_args = [a for a in sys.argv[1:] if a not in ("refs", "hapbul")]
+_args = [a for a in sys.argv[1:] if a not in ("refs", "hapbul", "special")]
 SRC = _args[0] if _args else r"C:\Users\user\Downloads\경기도교육청_2027수시NAVI_수시나비__260707_보호해제.xlsx"
 OUT = Path("public/data"); OUT.mkdir(parents=True, exist_ok=True)
 
@@ -252,11 +252,144 @@ def extract_hapbul():
 
 
 
+# ---- 특수 탭(정적 표) 맞춤 추출 ----
+def _special_notice(wb):
+    ws = wb["안내필독"]
+    intro = []
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row, values_only=True):
+        cells = [str(v).strip() for v in row if v is not None and str(v).strip() != ""]
+        if cells:
+            intro.append(" ".join(cells))
+    return {"sheet": "안내필독", "key": "notice", "intro": intro, "tables": []}
+
+
+def _special_johgyeon(wb):
+    from openpyxl.utils import column_index_from_string as ci
+    ws = wb["백분위조견표"]
+    note = ws.cell(3, 2).value  # B3: "시트 활용 정보\n1. ...\n..."
+    intro = [ln.strip() for ln in str(note).split("\n") if ln.strip()] if note else []
+
+    def clean(v):
+        if v is None:
+            return ""
+        if isinstance(v, str) and v.startswith("#"):  # #VALUE! 등 오류
+            return ""
+        return v
+
+    def panel(name_c, val_cols, columns, title):
+        rows = []
+        for r in range(11, 137):
+            nm = ws.cell(r, ci(name_c)).value
+            if nm is None or str(nm).strip() == "":
+                continue
+            rows.append([str(nm).strip()] + [clean(ws.cell(r, ci(c)).value) for c in val_cols])
+        return {"title": title, "columns": columns, "rows": rows}
+
+    t1 = panel("B", ["O", "P", "Q", "R"], ["대학명", "최대", "중앙값", "최소", "평균"], "대학별 입시결과 범위 (1)")
+    t2 = panel("CY", ["DO", "DP", "DQ", "DR"], ["대학명", "최대", "중앙값", "최소", "평균"], "대학별 입시결과 범위 (2)")
+    t3 = panel("FE", ["FG", "FH", "FI", "FJ", "FK"],
+               ["대학명(세부)", "계열", "70%컷", "정원", "경쟁률", "충원율"], "의약학·교대 세부")
+    return {"sheet": "백분위조견표", "key": "johgyeon", "intro": intro, "tables": [t1, t2, t3]}
+
+
+def _special_grade_conv(wb):
+    from openpyxl.utils import column_index_from_string as ci
+    ws = wb["등급변환표"]
+
+    def b(r):  # col B 텍스트 한 줄
+        v = ws.cell(r, 2).value
+        return str(v).strip() if v is not None and str(v).strip() != "" else None
+
+    intro = [t for t in (b(r) for r in list(range(3, 10)) + list(range(18, 27))) if t]
+
+    def cell(r, letter):
+        return ws.cell(r, ci(letter)).value
+
+    # 변환 결과(예시 성적): row16을 조합당 한 행으로 세로 전개
+    conv_rows = [
+        ["전과목", cell(16, "G"), cell(16, "I")],
+        ["국수영사과", cell(16, "J"), cell(16, "L")],
+        ["국수영과", cell(16, "M"), cell(16, "O")],
+        ["국수영사", cell(16, "P"), cell(16, "R")],
+    ]
+    conv_rows = [[("" if v is None else v) for v in row] for row in conv_rows]
+    grade5 = cell(16, "B")
+    conv = {"title": f"변환 결과 (예시: 5등급 {grade5})",
+            "columns": ["교과조합", "25%-75% 범위", "변환 등급"], "rows": conv_rows}
+
+    # <표1> 5등급→9등급 샘플 (row30~52)
+    t1_rows = []
+    for r in range(30, 53):
+        a, c = cell(r, "B"), cell(r, "F")
+        if (a is None or str(a).strip() == "") and (c is None or str(c).strip() == ""):
+            continue
+        t1_rows.append([("" if a is None else a), ("" if c is None else c)])
+    table1 = {"title": "<표1> 5등급→9등급 (샘플)", "columns": ["5등급", "9등급"], "rows": t1_rows}
+
+    # <표2> 석차누적비 샘플
+    t2_cols = ["K", "L", "M", "O", "P", "Q"]
+    t2_rows = []
+    for r in range(30, 53):
+        k = cell(r, "K")
+        if k is None or str(k).strip() == "":
+            continue
+        t2_rows.append([("" if cell(r, c) is None else cell(r, c)) for c in t2_cols])
+    table2 = {"title": "<표2> 석차누적비 (샘플)",
+              "columns": ["5등급", "5등급_석차", "5등급_석차누적비", "9등급", "9등급_석차", "9등급_석차누적비"],
+              "rows": t2_rows}
+    return {"sheet": "등급변환표", "key": "gradeConv", "intro": intro, "tables": [conv, table1, table2]}
+
+
+def _special_trend(wb):
+    from openpyxl.utils import column_index_from_string as ci
+    ws = wb["지원경향"]
+
+    def c8(letter):
+        v = ws.cell(8, ci(letter)).value
+        return "" if v is None else str(v).strip()
+
+    intro = [f"기준: {c8('C')} / {c8('D')} / {c8('E')} / {c8('G')}"]
+
+    def table(anchor_c, cols, columns, title):
+        rows = []
+        for r in range(17, 616):  # 헤더 row16, 데이터 row17(순번1)부터
+            nm = ws.cell(r, ci(anchor_c)).value
+            if nm is None or str(nm).strip() == "":
+                continue
+            rows.append([("" if ws.cell(r, ci(c)).value is None else ws.cell(r, ci(c)).value) for c in cols])
+        return {"title": title, "columns": columns, "rows": rows}
+
+    t1 = table("C", ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"],
+               ["순번", "권역", "대학", "전형", "세부전형", "계열", "모집단위", "모집인원", "지원사례수", "합격사례수", "합격률(%)"],
+               "모집단위 기준")
+    t2 = table("M", ["M", "N", "O", "P", "Q", "R", "S"],
+               ["대학", "전형", "세부전형", "계열", "지원사례수", "합격사례수", "합격률(%)"],
+               "세부전형 기준")
+    return {"sheet": "지원경향", "key": "trend", "intro": intro, "tables": [t1, t2]}
+
+
+def extract_special():
+    import json as _json
+    wb = openpyxl.load_workbook(SRC, data_only=True)  # 랜덤 셀 접근 위해 non-read_only
+    outdir = OUT / "special"; outdir.mkdir(parents=True, exist_ok=True)
+    builders = [_special_notice, _special_johgyeon, _special_grade_conv, _special_trend]
+    index = []
+    for build in builders:
+        d = build(wb)
+        _json.dump(d, open(outdir / f"{d['key']}.json", "w", encoding="utf-8"), ensure_ascii=False)
+        index.append({"key": d["key"], "sheet": d["sheet"],
+                      "tables": len(d["tables"]), "introLines": len(d["intro"])})
+        print(f"special {d['sheet']}: {len(d['tables'])} tables, {len(d['intro'])} intro lines")
+    _json.dump(index, open(outdir / "index.json", "w", encoding="utf-8"), ensure_ascii=False)
+
+
 if __name__ == "__main__":
     if "refs" in sys.argv:
         extract_refs()
     elif "hapbul" in sys.argv:
         extract_hapbul()
+    elif "special" in sys.argv:
+        extract_special()
     else:
         extract_moojib()
         extract_calc()
