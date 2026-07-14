@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { loadCaseChart } from '../data/loadCaseChart.ts'
 import type { CaseChartData, CaseRow } from '../data/loadCaseChart.ts'
+import { filterCaseRows } from '../engine/caseChartFilter.ts'
 import DataTable from './DataTable.tsx'
 
 // 레이아웃(px 고정 — 축 헤더와 본문 SVG를 정확히 정렬).
@@ -13,6 +14,10 @@ const AXIS_H = 26
 
 function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n - 1) + '…' : s
+}
+
+function toggle(arr: string[], v: string): string[] {
+  return arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]
 }
 
 function niceDomain(rows: CaseRow[]): [number, number] {
@@ -32,6 +37,10 @@ function CaseChart({ rows }: { rows: CaseRow[] }) {
   for (let t = gmin; t <= gmax + 1e-9; t += 0.5) ticks.push(Math.round(t * 10) / 10)
 
   const bodyH = rows.length * ROW_H + 8
+
+  if (rows.length === 0) {
+    return <p className="empty-note">조건에 맞는 사례가 없습니다. 필터를 조정해 보세요.</p>
+  }
 
   return (
     <div className="casechart-scroll">
@@ -75,9 +84,7 @@ function CaseChart({ rows }: { rows: CaseRow[] }) {
                   className="casechart-bar"
                 />
               )}
-              {r.c50 != null && (
-                <circle cx={x(r.c50)} cy={cy} r={4.5} className="casechart-marker" />
-              )}
+              {r.c50 != null && <circle cx={x(r.c50)} cy={cy} r={4.5} className="casechart-marker" />}
             </g>
           )
         })}
@@ -93,11 +100,26 @@ export default function CaseChartTab() {
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<'chart' | 'table'>('chart')
 
+  // 필터 상태 (기본값은 데이터 로드 후 defaults로 초기화).
+  const [kwons, setKwons] = useState<string[]>([])
+  const [gyes, setGyes] = useState<string[]>([])
+  const [jh, setJh] = useState('')
+  const [gyogwa, setGyogwa] = useState('')
+  const [upper, setUpper] = useState(1)
+  const [lower, setLower] = useState(9)
+
   useEffect(() => {
     let cancelled = false
     loadCaseChart()
       .then((d) => {
-        if (!cancelled) setData(d)
+        if (cancelled) return
+        setData(d)
+        setKwons(d.defaults.kwons)
+        setGyes(d.defaults.gyes)
+        setJh(d.defaults.jh)
+        setGyogwa(d.defaults.gyogwa)
+        setUpper(d.defaults.upper)
+        setLower(d.defaults.lower)
       })
       .catch((err: unknown) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err))
@@ -107,9 +129,14 @@ export default function CaseChartTab() {
     }
   }, [])
 
+  const rows = useMemo(() => {
+    if (!data) return []
+    return filterCaseRows(data.rows, { kwons, gyes, jh, gyogwa, upper, lower })
+  }, [data, kwons, gyes, jh, gyogwa, upper, lower])
+
   const tableRows = useMemo(
-    () => (data ? data.rows.map((r) => [r.rank, r.univ, r.jh, r.cases, r.c30, r.c50, r.c70]) : []),
-    [data],
+    () => rows.map((r) => [r.rank, r.univ, r.jh, r.cases, r.c30, r.c50, r.c70]),
+    [rows],
   )
 
   if (error) {
@@ -123,7 +150,12 @@ export default function CaseChartTab() {
     <section className="panel casechart-tab">
       <div className="result-table-header">
         <h2>사례차트</h2>
-        <button type="button" className="casechart-toggle" onClick={() => setView((v) => (v === 'chart' ? 'table' : 'chart'))}>
+        <span className="result-count">{rows.length}건</span>
+        <button
+          type="button"
+          className="casechart-toggle"
+          onClick={() => setView((v) => (v === 'chart' ? 'table' : 'chart'))}
+        >
           {view === 'chart' ? '표로 보기' : '차트로 보기'}
         </button>
       </div>
@@ -136,15 +168,86 @@ export default function CaseChartTab() {
         </div>
       )}
 
-      <p className="casechart-criteria">
-        <strong>기준</strong> {data.criteria}
-      </p>
+      <div className="casechart-filters">
+        <div className="chip-group">
+          <span className="chip-group-label">권역</span>
+          <div className="chips">
+            {data.options.kwons.map((k) => (
+              <button
+                key={k}
+                type="button"
+                className={kwons.includes(k) ? 'chip chip-selected' : 'chip'}
+                onClick={() => setKwons((prev) => toggle(prev, k))}
+              >
+                {k}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="chip-group">
+          <span className="chip-group-label">계열</span>
+          <div className="chips">
+            {data.options.gyes.map((g) => (
+              <button
+                key={g}
+                type="button"
+                className={gyes.includes(g) ? 'chip chip-selected' : 'chip'}
+                onClick={() => setGyes((prev) => toggle(prev, g))}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="casechart-selects">
+          <label className="field">
+            <span>전형</span>
+            <select value={jh} onChange={(e) => setJh(e.target.value)}>
+              {data.options.jhs.map((j) => (
+                <option key={j} value={j}>
+                  {j}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>교과조합</span>
+            <select value={gyogwa} onChange={(e) => setGyogwa(e.target.value)}>
+              {data.options.gyogwas.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>등급 상한</span>
+            <input
+              type="number"
+              step="0.1"
+              value={upper}
+              onChange={(e) => setUpper(e.target.value === '' ? 1 : Number(e.target.value))}
+            />
+          </label>
+          <label className="field">
+            <span>등급 하한</span>
+            <input
+              type="number"
+              step="0.1"
+              value={lower}
+              onChange={(e) => setLower(e.target.value === '' ? 9 : Number(e.target.value))}
+            />
+          </label>
+        </div>
+      </div>
 
       {view === 'chart' ? (
         <>
-          <CaseChart rows={data.rows} />
+          <CaseChart rows={rows} />
           <p className="casechart-legend">
-            막대 = 30~70%컷 범위 · 점 = 50%컷 · 내신 등급(낮을수록 우수)
+            막대 = 30~70%컷 범위 · 점 = 50%컷 · 내신 등급(낮을수록 우수) · 등급 상한~하한 사이 70%컷만 표시
           </p>
         </>
       ) : (

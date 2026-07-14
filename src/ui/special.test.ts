@@ -4,11 +4,12 @@ import johgyeon from '../../public/data/special/johgyeon.json'
 import gradeConv from '../../public/data/special/gradeConv.json'
 import trend from '../../public/data/special/trend.json'
 import caseChart from '../../public/data/special/caseChart.json'
+import { filterCaseRows } from '../engine/caseChartFilter.ts'
+import type { CaseAggRow, CaseDefaults } from '../data/loadCaseChart.ts'
 
 type Table = { title: string | null; columns: string[]; rows: (string | number | null)[][] }
 type Special = { sheet: string; key: string; intro: string[]; tables: Table[] }
-type CaseRow = { rank: number | null; univ: string; jh: string; cases: number | null; c30: number | null; c50: number | null; c70: number | null }
-type CaseChart = { sheet: string; key: string; intro: string[]; criteria: string; rows: CaseRow[] }
+type CaseChart = { sheet: string; key: string; intro: string[]; options: unknown; defaults: CaseDefaults; rows: CaseAggRow[] }
 
 describe('특수 탭 추출 골든', () => {
   it('안내필독: intro 텍스트만, 표 없음', () => {
@@ -45,12 +46,17 @@ describe('특수 탭 추출 골든', () => {
     expect(d.tables[0].rows.length).toBeGreaterThan(3)
   })
 
-  it('사례차트: 30/50/70컷 범위 데이터', () => {
+  it('사례차트: 기본 필터가 캐시된 22행을 재현', () => {
     const d = caseChart as CaseChart
     expect(d.sheet).toBe('사례차트')
-    expect(d.rows.length).toBeGreaterThan(20)
-    expect(d.rows[0].univ).toBe('성균관대')
-    expect(Math.abs((d.rows[0].c30 as number) - 1.66)).toBeLessThan(0.01)
-    expect(d.rows[0].c30 as number).toBeLessThan(d.rows[0].c70 as number)
+    expect(d.rows.length).toBeGreaterThan(1000)
+    const res = filterCaseRows(d.rows, d.defaults)
+    expect(res.length).toBe(22)
+    expect(res[0].univ).toBe('성균관대')
+    expect(res[0].jh).toBe('탐구형')
+    expect(res[0].cases).toBe(54)
+    expect(Math.abs((res[0].c70 as number) - 2.21)).toBeLessThan(0.01)
+    // 70%컷 오름차순
+    expect((res[0].c70 as number) <= (res[1].c70 as number)).toBe(true)
   })
 })

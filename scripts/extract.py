@@ -369,37 +369,57 @@ def _special_trend(wb):
 
 
 def _special_case_chart(wb):
-    # 사례차트: 대학(전형별) 30/50/70%컷 내신 범위. 차트 뷰어(CaseChartTab)가 렌더.
+    # 사례차트: 대학(전형별) 30/50/70%컷 내신 범위. 인터랙티브 뷰어(CaseChartTab)가
+    # 권역·전형·계열·교과조합·등급범위로 필터/정렬한다. 컷은 지원데이터에 이미 집계돼 있음
+    # (rows 2~1168 = 권역·전형·세부전형·계열·대학별 4교과조합 집계). 매핑은 캐시된 22행으로 검증됨.
     from openpyxl.utils import column_index_from_string as ci
     ws = wb["사례차트"]
     note = ws.cell(3, 2).value  # B3: "시트 활용 정보\n..."
     intro = [ln.strip() for ln in str(note).split("\n") if ln.strip()] if note else []
 
+    src = wb["지원데이터"]
+
     def cell(r, letter):
-        return ws.cell(r, ci(letter)).value
+        return src.cell(r, ci(letter)).value
 
     def txt(v):
         return "" if v is None else str(v).strip()
 
-    # 기준 입력행(row6): 권역/전형/계열/기준/학생성적/등급상한/등급하한
-    criteria = (f"{txt(cell(6,'B'))} / {txt(cell(6,'C'))} / {txt(cell(6,'D'))} / {txt(cell(6,'E'))}"
-                f" · 학생성적 {txt(cell(6,'F'))} · 등급 {txt(cell(6,'G'))}~{txt(cell(6,'H'))}")
-
+    GYOGWA = ["전과목", "국수영사과", "국수영사", "국수영과"]
+    BLOCKS = {  # 교과조합 -> (건수, 30%, 50%, 70%) 컬럼
+        "전과목": ("AB", "AC", "AD", "AE"),
+        "국수영사과": ("AF", "AG", "AH", "AI"),
+        "국수영사": ("AJ", "AK", "AL", "AM"),
+        "국수영과": ("AN", "AO", "AP", "AQ"),
+    }
     rows = []
-    for r in range(9, ws.max_row + 1):
-        univ = cell(r, "B")
-        if univ is None or str(univ).strip() == "":
+    kwons, jhs, gyes = set(), set(), set()
+    for r in range(2, 1169):
+        kwon = cell(r, "T"); univ = cell(r, "Y")
+        if kwon is None or univ is None or str(univ).strip() == "":
             continue
-        rows.append({
-            "rank": _num(cell(r, "A")),
-            "univ": str(univ).strip(),
-            "jh": txt(cell(r, "C")),
-            "cases": _num(cell(r, "E")),
-            "c30": _num(cell(r, "F")),
-            "c50": _num(cell(r, "G")),
-            "c70": _num(cell(r, "H")),
-        })
-    return {"sheet": "사례차트", "key": "caseChart", "intro": intro, "criteria": criteria, "rows": rows}
+        jh = txt(cell(r, "V")); gye = txt(cell(r, "X")); sebu = txt(cell(r, "W"))
+        cuts = {name: [_num(cell(r, cc)), _num(cell(r, c3)), _num(cell(r, c5)), _num(cell(r, c7))]
+                for name, (cc, c3, c5, c7) in BLOCKS.items()}
+        rows.append({"k": str(kwon).strip(), "j": jh, "g": gye, "u": str(univ).strip(), "s": sebu, "c": cuts})
+        kwons.add(str(kwon).strip())
+        if jh:
+            jhs.add(jh)
+        if gye:
+            gyes.add(gye)
+
+    # 기본 필터 = 캐시된 입력행(사례차트 row6): 권역/전형/계열/교과조합/-/등급상한/등급하한
+    def c6(letter):
+        v = ws.cell(6, ci(letter)).value
+        if v is None:
+            return None
+        return v if isinstance(v, (int, float)) else str(v).strip()
+
+    defaults = {"kwons": [c6("B")], "gyes": [c6("D")], "jh": c6("C"),
+                "gyogwa": c6("E"), "upper": c6("G"), "lower": c6("H")}
+    options = {"kwons": sorted(kwons), "jhs": sorted(jhs), "gyes": sorted(gyes), "gyogwas": GYOGWA}
+    return {"sheet": "사례차트", "key": "caseChart", "intro": intro,
+            "options": options, "defaults": defaults, "rows": rows}
 
 
 def extract_special():
