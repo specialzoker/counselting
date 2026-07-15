@@ -13,6 +13,7 @@ import RefTable from './ui/RefTable.tsx'
 import HapbulTab from './ui/HapbulTab.tsx'
 import SpecialTab from './ui/SpecialTab.tsx'
 import CaseChartTab from './ui/CaseChartTab.tsx'
+import TrendTab from './ui/TrendTab.tsx'
 
 // 골든 학생 (엑셀 판정 결과 재현용 기본값).
 const GOLDEN_SCORES: StudentScores = {
@@ -191,7 +192,15 @@ function App() {
 
       {SPECIAL_TABS.filter((tab) => visitedTabs.has(tab.key)).map((tab) => (
         <div key={tab.key} style={{ display: activeTab === tab.key ? undefined : 'none' }}>
-          <main>{tab.key === 'caseChart' ? <CaseChartTab /> : <SpecialTab tabKey={tab.key} />}</main>
+          <main>
+            {tab.key === 'caseChart' ? (
+              <CaseChartTab />
+            ) : tab.key === 'trend' ? (
+              <TrendTab />
+            ) : (
+              <SpecialTab tabKey={tab.key} />
+            )}
+          </main>
         </div>
       ))}
 

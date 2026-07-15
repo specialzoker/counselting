@@ -487,6 +487,32 @@ thead tr:first-child th.group-jonghap {
   font-size: 0.85rem;
 }
 
+/* TrendTab: 기준_* 4단 캐스케이딩 선택 */
+.trend-cascade {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-bottom: 0.9rem;
+  font-size: 0.85rem;
+}
+
+.trend-cascade label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: var(--text-muted);
+}
+
+.trend-cascade select {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  color: inherit;
+  font-size: 0.85rem;
+  min-width: 160px;
+}
+
 /* 특수 탭(정적 표) */
 .special-intro {
   margin-bottom: 1rem;
